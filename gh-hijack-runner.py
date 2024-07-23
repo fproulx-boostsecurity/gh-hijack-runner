@@ -15,6 +15,7 @@ Options:
     --runer-name <name>                     Runner name
     --runner-group <name>                   Runner group name
     --last-Message-id <id>                  Last message ID
+    --sleep <seconds>                       Delay in second before returning an error
 
 Args:
     --registration-token <token>            Token used to register a runner
@@ -49,6 +50,7 @@ from binascii import hexlify
 import jwt
 import uuid
 from datetime import datetime, timedelta, timezone
+import time
 from os import makedirs
 from os.path import exists, isfile
 import sys
@@ -88,6 +90,7 @@ class Hijack:
     outputFolder = None
     labels = None
     ephemeral = False
+    sleep = 0
 
     def __init__(self):
         self._session = requests.Session()
@@ -634,6 +637,9 @@ if __name__ == "__main__":
     if args["--labels"]:
         hijack.labels = args["--labels"]
     
+    if args["--sleep"]:
+        hijack.sleep = int(args["--sleep"])
+
     if args["--ephemeral"]:
         hijack.ephemeral = True
 
@@ -670,12 +676,14 @@ if __name__ == "__main__":
 
                 if body.get("jobId"):
                     hijack.deleteMesssageFromPool(hijack.lastMessageId)
-                    hijack.returnError(body)
-
-                    hijack.displayVariables(body)
                     
+                    hijack.displayVariables(body)
+
                     if hijack.outputFolder != None:
                         hijack.saveBody(body)
+
+                    time.sleep(hijack.sleep)
+                    hijack.returnError(body) 
 
                     if hijack.ephemeral:
                         sys.exit(0)
